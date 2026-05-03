@@ -1,5 +1,5 @@
 object QuestionBank {
-  val allQuestions: List[WyrQuestion] = List
+  val allQuestions: List[WyrQuestion] = List(
 
     // ── FUNNY / SILLY ──────────────────────────────────────────────────────────
     WyrQuestion(1,  "Would you rather always sneeze glitter or always hiccup bubbles?",
