@@ -52,7 +52,7 @@ object Main {
       List.empty
     } else {
       val stopWords = Set(
-        "an", "the", "me", "my", "i", "a" ,
+        "an", "the", "me", "my", "i" ,
         "to", "give", "want", "can", "you", "please"
       )
 
