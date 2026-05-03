@@ -1,3 +1,5 @@
+import java.time.LocalDateTime
+
 object ConversationMemory {
 
   // This is the starting memory of the chatbot.
@@ -8,23 +10,32 @@ object ConversationMemory {
     preferences = Map.empty,
     alreadyAsked = Set.empty,
     currentQuestion = None,
-    answerStats = Map(
-      "A" -> 0,
-      "B" -> 0
-    ),
+    answerStats = Map("A" -> 0, "B" -> 0),
     roundsPlayed = 0
   )
 
-  // Skeleton for Day 2.
-  // We are not writing the full logic yet.
-  // Later, this function will save every user/bot exchange into history.
   def logInteraction(
-                      userInput: String,
-                      botResponse: String,
-                      intent: Intent,
-                      state: ConversationState
-                    ): ConversationState = {
-    state
+      userInput: String,
+      botResponse: String,
+      intent: Intent,
+      state: ConversationState
+  ): ConversationState = {
+    val entry = InteractionEntry(
+      sequenceNumber = state.history.length + 1,
+      userInput = userInput,
+      botResponse = botResponse,
+      detectedIntent = intent,
+      topic = state.currentQuestion.map(_.category),
+      mood = None,
+      timestamp = LocalDateTime.now().toString
+    )
+
+    state.copy(history = state.history :+ entry)
   }
 
+  def getConversationHistory(state: ConversationState): List[InteractionEntry] =
+    state.history
+
+  def getLastNInteractions(n: Int, state: ConversationState): List[InteractionEntry] =
+    state.history.takeRight(n)
 }
