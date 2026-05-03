@@ -426,3 +426,90 @@ object QuestionBank {
       "Many acquaintances", "One or two deep friendships", "relationships", "medium", "chill", List("friendship", "social", "depth"))
   )
 }
+
+object RecommendationEngine {
+
+  val availableCategories: List[String] =
+    QuestionBank.allQuestions.map(_.category).distinct.sorted
+
+  val availableIntensities: List[String] =
+    QuestionBank.allQuestions.map(_.intensity).distinct.sorted
+
+  val availableMoods: List[String] =
+    QuestionBank.allQuestions.map(_.mood).distinct.sorted
+
+  def getUserPreferences(state: ConversationState): Map[String, String] = {
+    state.preferences
+  }
+
+  private def clean(value: String): String = {
+    value.trim.toLowerCase
+  }
+
+  def isValidPreference(key: String, value: String): Boolean = {
+    val cleanKey = clean(key)
+    val cleanValue = clean(value)
+
+    cleanKey match {
+      case "category" =>
+        availableCategories.contains(cleanValue)
+
+      case "intensity" =>
+        availableIntensities.contains(cleanValue)
+
+      case "mood" =>
+        availableMoods.contains(cleanValue)
+
+      case "avoidCategory" =>
+        availableCategories.contains(cleanValue)
+
+      case _ =>
+        false
+    }
+  }
+
+  def updatePreferences(
+      preferences: Map[String, String],
+      key: String,
+      value: String
+  ): Map[String, String] = {
+    val cleanKey = clean(key)
+    val cleanValue = clean(value)
+
+    if (isValidPreference(cleanKey, cleanValue)) {
+      preferences + (cleanKey -> cleanValue)
+    } else {
+      preferences
+    }
+  }
+
+  def updatePreferences(
+      state: ConversationState,
+      key: String,
+      value: String
+  ): ConversationState = {
+    val newPreferences = updatePreferences(state.preferences, key, value)
+    state.copy(preferences = newPreferences)
+  }
+
+  def preferenceMessage(key: String, value: String): String = {
+    val cleanKey = clean(key)
+    val cleanValue = clean(value)
+
+    if (isValidPreference(cleanKey, cleanValue)) {
+      s"Got it! I saved your $cleanKey preference as '$cleanValue'."
+    } else {
+      s"I couldn't save '$cleanValue' as a $cleanKey preference. Try one of the available options."
+    }
+  }
+
+  def availableQuestions(
+      data: List[WyrQuestion],
+      alreadyAsked: Set[Int]
+  ): List[WyrQuestion] = {
+    data.filter(question => !alreadyAsked.contains(question.id))
+  }
+}
+
+
+    
