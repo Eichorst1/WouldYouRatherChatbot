@@ -25,5 +25,5 @@ def askQuestion(question: WyrQuestion, state: ConversationState): (String, Conve
   }
 
   def chooseNextQuestion(data: List[WyrQuestion], alreadyAsked: Set[Int]): Option[WyrQuestion] = {
-    data.find(question => !alreadyAsked.contains(question.id))
+    data.find(question => !alreadyAsked.contains(question.id)
 }
