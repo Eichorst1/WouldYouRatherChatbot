@@ -1,4 +1,4 @@
-import scala.io.StdIn.readLine
+import scala.io.StdIn.readLin
 
 object Main {
 
