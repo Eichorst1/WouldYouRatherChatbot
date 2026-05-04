@@ -483,15 +483,6 @@ object RecommendationEngine {
     }
   }
 
-  def updatePreferences(
-      state: ConversationState,
-      key: String,
-      value: String
-  ): ConversationState = {
-    val newPreferences = updatePreferences(state.preferences, key, value)
-    state.copy(preferences = newPreferences)
-  }
-
   def preferenceMessage(key: String, value: String): String = {
     val cleanKey = clean(key)
     val cleanValue = clean(value)
