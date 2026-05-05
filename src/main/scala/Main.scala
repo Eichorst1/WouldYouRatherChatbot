@@ -218,3 +218,48 @@ object Main {
     }
   }
 }
+def handleUserInput(input: String, state: ConversationState): (String, ConversationState) = {
+  val tokens = parseInput(input)
+  val intent = detectIntent(tokens)
+  val (response, updatedState) = generateResponse(intent, state)
+  val finalState = ConversationMemory.logInteraction(input,response,intent,updatedState)(response, finalState)}
+
+def generateResponse(intent: Intent, state: ConversationState): (String, ConversationState) = {
+   intent match {
+       case Greeting =>("Hello! Ready to play?", state)
+       case AskQuestion(_) => 
+       val question = GameFlow.chooseNextQuestion(QuestionBank.allQuestions,state.alreadyAsked)
+
+      question match {
+       case Some(q) => GameFlow.askQuestion(q, state)
+       case None =>
+          ("No more questions available.", state)
+      }
+
+    case AnswerChoice(choice) =>
+      GameFlow.handleAnswer(choice, state)
+
+    case ShowSummary =>
+
+      val history =
+        ConversationMemory.getConversationHistory(state)
+
+      (history.mkString("\n"), state)
+
+    case ShowTopics =>
+
+      val topics =
+        ConversationMemory.extractTopics(state.history)
+
+      (topics.mkString(", "), state)
+
+    case Help =>
+      ("Type play to start or A/B to answer.", state)
+
+    case ExitChat =>
+      ("Goodbye!", state)
+
+    case _ =>
+      ("I don't understand.", state)
+  }
+}
