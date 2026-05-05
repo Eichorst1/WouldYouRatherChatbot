@@ -39,3 +39,30 @@ object ConversationMemory {
   def getLastNInteractions(n: Int, state: ConversationState): List[InteractionEntry] =
     state.history.takeRight(n)
 }
+def detectRepeatedQuery(input: String,history: List[InteractionEntry]): Boolean = {
+  history.exists(
+    entry => entry.userInput == input
+  )
+}
+
+def detectTopicInText(text: String): Option[String] = {
+  val lower = text.toLowerCase
+if (lower.contains("funny"))
+    Some("funny")
+
+  else if (lower.contains("gaming"))
+    Some("gaming")
+
+  else if (lower.contains("food"))
+    Some("food")
+
+  else if (lower.contains("school"))
+    Some("school")
+
+  else
+    None
+}
+
+def extractTopics(history: List[InteractionEntry]): List[String] = {
+  history.flatMap(entry => entry.topic)
+}
