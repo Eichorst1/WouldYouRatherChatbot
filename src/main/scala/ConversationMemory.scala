@@ -39,12 +39,10 @@ object ConversationMemory {
   def getLastNInteractions(n: Int, state: ConversationState): List[InteractionEntry] =
     state.history.takeRight(n)
 }
-def detectRepeatedQuery(input: String,history: List[InteractionEntry]): Boolean = {
-  history.exists(
-    entry => entry.userInput == input
-  )
+def detectRepeatedQuery(input: String, history: List[InteractionEntry]): Boolean = {
+  val lowerInput = input.trim.toLowerCase
+  history.exists(entry => entry.userInput.trim.toLowerCase == lowerInput)
 }
-
 def detectTopicInText(text: String): Option[String] = {
   val lower = text.toLowerCase
 if (lower.contains("funny"))
