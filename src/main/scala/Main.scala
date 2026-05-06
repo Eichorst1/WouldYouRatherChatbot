@@ -222,43 +222,75 @@ def handleUserInput(input: String, state: ConversationState): (String, Conversat
   val tokens = parseInput(input)
   val intent = detectIntent(tokens)
   val (response, updatedState) = generateResponse(intent, state)
-  val finalState = ConversationMemory.logInteraction(input,response,intent,updatedState)(response, finalState)}
+  val finalState = ConversationMemory.logInteraction(input, response, intent, updatedState)
+  (response, finalState)
+}
 
 def generateResponse(intent: Intent, state: ConversationState): (String, ConversationState) = {
-   intent match {
-       case Greeting =>("Hello! Ready to play?", state)
-       case AskQuestion(_) => 
-       val question = GameFlow.chooseNextQuestion(QuestionBank.allQuestions,state.alreadyAsked)
+  intent match {
+    case Greeting =>
+      ("Hello! Ready to play?", state)
 
+    case AskQuestion(_) =>
+      val question = GameFlow.chooseNextQuestion(QuestionBank.allQuestions, state.alreadyAsked)
       question match {
-       case Some(q) => GameFlow.askQuestion(q, state)
-       case None =>
-          ("No more questions available.", state)
+        case Some(q) => GameFlow.askQuestion(q, state)
+        case None    => ("No more questions available.", state)
       }
 
     case AnswerChoice(choice) =>
       GameFlow.handleAnswer(choice, state)
 
     case ShowSummary =>
-
-      val history =
-        ConversationMemory.getConversationHistory(state)
-
-      (history.mkString("\n"), state)
+      val history = ConversationMemory.getConversationHistory(state)
+      
+      val summary = history.map(e => s"${e.sequenceNumber}: ${e.userInput} -> ${e.botResponse}").mkString("\n")
+      (if (summary.isEmpty) "No conversation yet." else summary, state)
 
     case ShowTopics =>
-
-      val topics =
-        ConversationMemory.extractTopics(state.history)
-
-      (topics.mkString(", "), state)
+      val topics = ConversationMemory.extractTopics(state.history)
+      (if (topics.isEmpty) "No topics found." else topics.mkString(", "), state)
 
     case Help =>
-      ("Type play to start or A/B to answer.", state)
+      ("Commands: play / A/B / summary / topics / help / exit", state)
 
     case ExitChat =>
       ("Goodbye!", state)
 
+    
+    case SetPreference(key, value) =>
+      val newState = RecommendationEngine.updatePreferences(state, key, value)
+      val msg = RecommendationEngine.preferenceMessage(key, value)
+      (msg, newState)
+
+    
+    case RecommendQuestion =>
+      val prefCat = state.preferences.get("category")
+      val filtered = prefCat match {
+        case Some(cat) => QuestionBank.allQuestions.filter(_.category == cat)
+        case None      => QuestionBank.allQuestions
+      }
+      GameFlow.chooseNextQuestion(filtered, state.alreadyAsked) match {
+        case Some(q) => GameFlow.askQuestion(q, state)
+        case None    => ("No matching question available.", state)
+      }
+
+   
+    case Cancel =>
+      ("Cancelled.", state.copy(currentQuestion = None))
+
+    
+    case Confirmation(confirmed) =>
+      (s"You said ${if (confirmed) "yes" else "no"}.", state)
+
+    
+    case UnknownIntent(input) =>
+      (s"Sorry, I didn't understand '$input'. Type 'help'.", state)
+
+    case InappropriateInput(_) =>
+      ("Please keep the conversation respectful.", state)
+
+    
     case _ =>
       ("I don't understand.", state)
   }
