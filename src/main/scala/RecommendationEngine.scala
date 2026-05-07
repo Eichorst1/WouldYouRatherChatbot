@@ -502,18 +502,6 @@ def preferenceMessage(key: String, value: String): String = {
     s"I couldn't save '$cleanValue' as a $cleanKey preference. Try one of the available options."
   }
 }
-
-  def preferenceMessage(key: String, value: String): String = {
-    val cleanKey = clean(key)
-    val cleanValue = clean(value)
-
-    if (isValidPreference(cleanKey, cleanValue)) {
-      s"Got it! I saved your $cleanKey preference as '$cleanValue'."
-    } else {
-      s"I couldn't save '$cleanValue' as a $cleanKey preference. Try one of the available options."
-    }
-  }
-
   def availableQuestions(
       data: List[WyrQuestion],
       alreadyAsked: Set[Int]
