@@ -38,7 +38,7 @@ object ConversationMemory {
 
   def getLastNInteractions(n: Int, state: ConversationState): List[InteractionEntry] =
     state.history.takeRight(n)
-}
+
 def detectRepeatedQuery(input: String, history: List[InteractionEntry]): Boolean = {
   val lowerInput = input.trim.toLowerCase
   history.exists(entry => entry.userInput.trim.toLowerCase == lowerInput)
@@ -63,4 +63,87 @@ if (lower.contains("funny"))
 
 def extractTopics(history: List[InteractionEntry]): List[String] = {
   history.flatMap(entry => entry.topic)
+}
+
+
+  
+// Returns most discussed topics in history
+def getMostDiscussedTopics(history: List[InteractionEntry]): List[String] = {
+
+  history
+    .flatMap(entry => entry.topic)
+    .groupBy(topic => topic)
+    .map { case (topic, occurrences) =>
+      (topic, occurrences.size)
+    }
+    .toList
+    .sortBy { case (topic, count) => -count }
+    .map { case (topic, count) => topic }
+}
+
+
+// Detects user mood from conversation text
+def getUserMood(history: List[InteractionEntry]): String = {
+
+  val text =
+    history.map(entry => entry.userInput.toLowerCase).mkString(" ")
+
+  if (
+    text.contains("love") ||
+    text.contains("fun") ||
+    text.contains("great") ||
+    text.contains("awesome") ||
+    text.contains("good")
+  )
+    "Positive 😊"
+
+  else if (
+    text.contains("bad") ||
+    text.contains("boring") ||
+    text.contains("hate") ||
+    text.contains("annoying")
+  )
+    "Negative 😞"
+
+  else
+    "Neutral 😐"
+}
+
+
+// Formats topics for display
+def formatTopics(history: List[InteractionEntry]): String = {
+
+  val topics =
+    getMostDiscussedTopics(history)
+
+  if (topics.isEmpty)
+    "No topics yet"
+
+  else
+    topics.mkString(", ")
+}
+
+
+// Creates a full conversation summary
+def summarizeConversation(
+    history: List[InteractionEntry],
+    state: ConversationState
+): String = {
+
+  val mood =
+    getUserMood(history)
+
+  s"""
+     |══════════════ SUMMARY ══════════════
+     |
+     |🔁 Rounds : ${state.roundsPlayed}
+     |
+     |📌 Topics : ${formatTopics(history)}
+     |
+     |😊 Mood   : $mood
+     |
+     |═════════════════════════════════════
+     |""".stripMargin
+} 
+
 }
