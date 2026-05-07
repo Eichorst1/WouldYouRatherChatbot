@@ -500,6 +500,81 @@ object RecommendationEngine {
   ): List[WyrQuestion] = {
     data.filter(question => !alreadyAsked.contains(question.id))
   }
+
+
+
+// Returns a ranked list of questions based on user preferences
+def recommend(
+    preferences: Map[String, String],
+    data: List[WyrQuestion],
+    alreadyAsked: Set[Int]
+): List[WyrQuestion] = {
+
+  val available =
+    data.filter(q => !alreadyAsked.contains(q.id))
+
+  val scored =
+    available.map { question =>
+
+      val score =
+        List(
+          preferences.get("category").contains(question.category),
+          preferences.get("intensity").contains(question.intensity),
+          preferences.get("mood").contains(question.mood)
+        ).count(_ == true)
+
+      (question, score)
+    }
+
+  scored
+    .sortBy { case (_, score) => -score }
+    .map(_._1)
+}
+
+
+// Returns best question wrapped in Option (safe)
+def recommendOne(
+    preferences: Map[String, String],
+    data: List[WyrQuestion],
+    alreadyAsked: Set[Int]
+): Option[WyrQuestion] = {
+
+  recommend(preferences, data, alreadyAsked).headOption
+}
+
+
+// Explains why a question was recommended
+def explainRecommendation(
+    question: WyrQuestion,
+    preferences: Map[String, String]
+): String = {
+
+  val matches =
+    List(
+      if (preferences.get("category").contains(question.category))
+        Some(s"category: ${question.category}")
+      else None,
+
+      if (preferences.get("intensity").contains(question.intensity))
+        Some(s"intensity: ${question.intensity}")
+      else None,
+
+      if (preferences.get("mood").contains(question.mood))
+        Some(s"mood: ${question.mood}")
+      else None
+    ).flatten
+
+  if (matches.isEmpty)
+    "I picked this question randomly for you."
+  else
+    s"I chose this because it matches your ${matches.mkString(", ")} preferences."
+}
+
+
+// Returns confirmation message for saved preference
+def preferenceMessage(key: String, value: String): String = {
+  s"Saved preference: $key -> $value"
+}
 }
 
 
