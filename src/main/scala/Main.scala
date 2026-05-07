@@ -279,8 +279,8 @@ def generateResponse(intent: Intent, state: ConversationState): (String, Convers
       (s"You said ${if (confirmed) "yes" else "no"}.", state)
 
     
-    case UnknownIntent(input) =>
-      (s"Sorry, I didn't understand '$input'. Type 'help'.", state)
+    case UnknownIntent(_) =>
+      (fallbackMessage(), state)
 
     case InappropriateInput(_) =>
       ("Please keep the conversation respectful.", state)
