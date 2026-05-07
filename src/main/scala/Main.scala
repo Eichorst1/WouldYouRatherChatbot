@@ -217,7 +217,7 @@ object Main {
         }
     }
   }
-}
+
 def handleUserInput(input: String, state: ConversationState): (String, ConversationState) = {
   val tokens = parseInput(input)
   val intent = detectIntent(tokens)
@@ -294,4 +294,65 @@ def generateResponse(intent: Intent, state: ConversationState): (String, Convers
     case _ =>
       ("I don't understand.", state)
   }
+}
+
+  
+// Shows available commands to help the user
+def helpMessage(): String =
+  """
+    |Available commands:
+    |
+    |hello
+    |play
+    |A / B
+    |summary
+    |topics
+    |profile
+    |recommend something
+    |exit
+    |
+    |Type 'help' for assistance.
+  """.stripMargin
+
+
+// Message when input is not understood
+def fallbackMessage(): String =
+  """
+    |I didn’t understand that command 😅
+    |
+    |Try:
+    |hello
+    |play
+    |A or B
+    |summary
+    |topics
+    |profile
+    |recommend something
+    |exit
+    |
+    |Type 'help' for all commands.
+  """.stripMargin
+
+
+// Gets a recommended question or fallback message
+def askRecommendedQuestion(
+    state: ConversationState
+): (String, ConversationState) = {
+
+  val questionOpt =
+    RecommendationEngine.recommendOne(
+      state.preferences,
+      QuestionBank.allQuestions,
+      state.alreadyAsked
+    )
+
+  questionOpt match {
+
+    case Some(question) =>
+      GameFlow.askQuestion(question, state)
+
+    case None =>
+      ("No recommended questions available right now.", state)
+  }
+}
 }
