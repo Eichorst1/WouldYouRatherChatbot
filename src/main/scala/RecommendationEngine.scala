@@ -468,20 +468,40 @@ object RecommendationEngine {
     }
   }
 
-  def updatePreferences(
-      preferences: Map[String, String],
-      key: String,
-      value: String
-  ): Map[String, String] = {
-    val cleanKey = clean(key)
-    val cleanValue = clean(value)
+def updatePreferences(
+    preferences: Map[String, String],
+    key: String,
+    value: String
+): Map[String, String] = {
+  val cleanKey = clean(key)
+  val cleanValue = clean(value)
 
-    if (isValidPreference(cleanKey, cleanValue)) {
-      preferences + (cleanKey -> cleanValue)
-    } else {
-      preferences
-    }
+  if (isValidPreference(cleanKey, cleanValue)) {
+    preferences + (cleanKey -> cleanValue)
+  } else {
+    preferences
   }
+}
+
+def updatePreferences(
+    state: ConversationState,
+    key: String,
+    value: String
+): ConversationState = {
+  val newPreferences = updatePreferences(state.preferences, key, value)
+  state.copy(preferences = newPreferences)
+}
+
+def preferenceMessage(key: String, value: String): String = {
+  val cleanKey = clean(key)
+  val cleanValue = clean(value)
+
+  if (isValidPreference(cleanKey, cleanValue)) {
+    s"Got it! I saved your $cleanKey preference as '$cleanValue'."
+  } else {
+    s"I couldn't save '$cleanValue' as a $cleanKey preference. Try one of the available options."
+  }
+}
 
   def preferenceMessage(key: String, value: String): String = {
     val cleanKey = clean(key)
@@ -568,12 +588,6 @@ def explainRecommendation(
     "I picked this question randomly for you."
   else
     s"I chose this because it matches your ${matches.mkString(", ")} preferences."
-}
-
-
-// Returns confirmation message for saved preference
-def preferenceMessage(key: String, value: String): String = {
-  s"Saved preference: $key -> $value"
 }
 }
 
