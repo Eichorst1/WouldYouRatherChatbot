@@ -250,9 +250,12 @@ def generateResponse(intent: Intent, state: ConversationState): (String, Convers
     case ShowTopics =>
       val topics = ConversationMemory.extractTopics(state.history)
       (if (topics.isEmpty) "No topics found." else topics.mkString(", "), state)
-
+    
+    case ShowProfile =>
+      (GameFlow.getPlayerProfile(state), state)
+    
     case Help =>
-      ("Commands: play / A/B / summary / topics / help / exit", state)
+      (helpMessage(), state)
 
     case ExitChat =>
       ("Goodbye!", state)
@@ -353,6 +356,26 @@ def askRecommendedQuestion(
 
     case None =>
       ("No recommended questions available right now.", state)
+  }
+}
+def main(args: Array[String]): Unit = {
+  println(greetUser())
+  loop(ConversationMemory.initialState)
+}
+
+def loop(state: ConversationState): Unit = {
+  val input = readLine("\nYou: ")
+
+  val (response, newState) =
+    handleUserInput(input, state)
+
+  println(s"\nBot: $response")
+
+  val intent =
+    detectIntent(parseInput(input))
+
+  if (intent != ExitChat) {
+    loop(newState)
   }
 }
 }
