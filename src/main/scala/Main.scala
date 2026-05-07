@@ -268,15 +268,7 @@ def generateResponse(intent: Intent, state: ConversationState): (String, Convers
 
     
     case RecommendQuestion =>
-      val prefCat = state.preferences.get("category")
-      val filtered = prefCat match {
-        case Some(cat) => QuestionBank.allQuestions.filter(_.category == cat)
-        case None      => QuestionBank.allQuestions
-      }
-      GameFlow.chooseNextQuestion(filtered, state.alreadyAsked) match {
-        case Some(q) => GameFlow.askQuestion(q, state)
-        case None    => ("No matching question available.", state)
-      }
+      askRecommendedQuestion(state)
 
    
     case Cancel =>
