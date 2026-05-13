@@ -1,4 +1,4 @@
-object QuestionBank {
+  object QuestionBank {
   val allQuestions: List[WyrQuestion] = List(
 
     // ── FUNNY / SILLY ──────────────────────────────────────────────────────────
