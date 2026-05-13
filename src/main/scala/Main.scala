@@ -87,6 +87,14 @@ object Main {
         false
     }
 
+    def isMood(word: String): Boolean = word match {
+      case "silly" | "fun" | "serious" | "chill" | "chaotic" =>
+        true
+
+      case _ =>
+        false
+    }
+
     def isGreeting(word: String): Boolean = word match {
       case "hi" | "hello" | "hey" | "start" =>
         true
@@ -183,13 +191,19 @@ object Main {
       case words if words.contains("topics") || words.contains("categories") =>
         ShowTopics
 
+      case words if words.contains("levels") || words.contains("intensities") || words.contains("difficulty") =>
+        ShowIntensities
+
+      case words if words.contains("moods") || words.contains("vibes") =>
+        ShowMoods
+
       case words if words.contains("profile") || words.contains("stats") =>
         ShowProfile
 
-      case words if words.contains("a") || words.contains("first") =>
+      case words if words.length == 1 && (words.contains("a") || words.contains("first")) =>
         AnswerChoice("A")
 
-      case words if words.contains("b") || words.contains("second") =>
+      case words if words.length == 1 && (words.contains("b") || words.contains("second")) =>
         AnswerChoice("B")
 
       case words if words.exists(isRecommendationRequest) =>
@@ -212,7 +226,14 @@ object Main {
                 SetPreference("intensity", intensity)
 
               case None =>
-                UnknownIntent(words.mkString(" "))
+                words.find(isMood) match {
+
+                  case Some(mood) =>
+                    SetPreference("mood", mood)
+
+                  case None =>
+                    UnknownIntent(words.mkString(" "))
+                }
             }
         }
     }
@@ -231,11 +252,37 @@ def generateResponse(intent: Intent, state: ConversationState): (String, Convers
     case Greeting =>
       ("Hello! Ready to play?", state)
 
-    case AskQuestion(_) =>
-      val question = GameFlow.chooseNextQuestion(QuestionBank.allQuestions, state.alreadyAsked)
+    case AskQuestion(categoryOpt) =>
+      val casualCategories =
+        List("funny", "food", "gaming", "fantasy", "chaotic", "daily", "travel")
+
+      val casualMoods =
+        List("silly", "fun", "chill", "chaotic")
+
+      val available =
+        QuestionBank.allQuestions.filter(q => !state.alreadyAsked.contains(q.id))
+
+      val filteredQuestions =
+        categoryOpt match {
+          case Some(category) =>
+            available.filter(q => q.category == category)
+
+          case None =>
+            available.filter(q =>
+              casualCategories.contains(q.category) ||
+                casualMoods.contains(q.mood)
+            )
+        }
+
+      val question =
+        scala.util.Random.shuffle(filteredQuestions).headOption
+
       question match {
-        case Some(q) => GameFlow.askQuestion(q, state)
-        case None    => ("No more questions available.", state)
+        case Some(q) =>
+          GameFlow.askQuestion(q, state)
+
+        case None =>
+          ("No casual questions available right now.", state)
       }
 
     case AnswerChoice(choice) =>
@@ -243,13 +290,24 @@ def generateResponse(intent: Intent, state: ConversationState): (String, Convers
 
     case ShowSummary =>
       val history = ConversationMemory.getConversationHistory(state)
-      
-      val summary = history.map(e => s"${e.sequenceNumber}: ${e.userInput} -> ${e.botResponse}").mkString("\n")
-      (if (summary.isEmpty) "No conversation yet." else summary, state)
+
+      if (history.isEmpty) {
+        ("No conversation yet.", state)
+      } else {
+        (ConversationMemory.summarizeConversation(history, state), state)
+      }
 
     case ShowTopics =>
-      val topics = ConversationMemory.extractTopics(state.history)
-      (if (topics.isEmpty) "No topics found." else topics.mkString(", "), state)
+      val categories = RecommendationEngine.availableCategories.mkString(", ")
+      (s"Available topics/categories:\n$categories", state)
+
+    case ShowIntensities =>
+      val intensities = RecommendationEngine.availableIntensities.mkString(", ")
+      (s"Available intensity levels:\n$intensities", state)
+
+    case ShowMoods =>
+      val moods = RecommendationEngine.availableMoods.mkString(", ")
+      (s"Available moods/vibes:\n$moods", state)
     
     case ShowProfile =>
       (GameFlow.getPlayerProfile(state), state)
@@ -297,16 +355,26 @@ def helpMessage(): String =
   """
     |Available commands:
     |
+    |Basic:
     |hello
     |play
-    |A / B
-    |summary
-    |topics
-    |profile
     |recommend something
-    |exit
+    |A / B
     |
-    |Type 'help' for assistance.
+    |Show available options:
+    |topics  -> show available question categories
+    |levels  -> show difficulty levels
+    |moods   -> show moods/vibes
+    |
+    |Lock preferences:
+    |funny / gaming / deep / moral / school / money / food / travel / fantasy / chaotic / relationships / daily
+    |easy / medium / hard
+    |silly / fun / serious / chill / chaotic
+    |
+    |Other:
+    |summary
+    |profile
+    |exit
   """.stripMargin
 
 
@@ -331,12 +399,28 @@ def fallbackMessage(): String =
 
 // Gets a recommended question or fallback message
 def askRecommendedQuestion(
-    state: ConversationState
-): (String, ConversationState) = {
+                            state: ConversationState
+                          ): (String, ConversationState) = {
+
+  val mostPlayedCategory =
+    ConversationMemory.getMostDiscussedTopics(state.history).headOption
+
+  val smartPreferences =
+    if (state.preferences.nonEmpty) {
+      state.preferences
+    } else {
+      mostPlayedCategory match {
+        case Some(category) =>
+          Map("category" -> category)
+
+        case None =>
+          Map("category" -> "funny", "intensity" -> "easy")
+      }
+    }
 
   val questionOpt =
     RecommendationEngine.recommendOne(
-      state.preferences,
+      smartPreferences,
       QuestionBank.allQuestions,
       state.alreadyAsked
     )
@@ -344,7 +428,25 @@ def askRecommendedQuestion(
   questionOpt match {
 
     case Some(question) =>
-      GameFlow.askQuestion(question, state)
+      val explanation =
+        RecommendationEngine.explainRecommendation(question, smartPreferences)
+
+      val recommendationIntro =
+        if (state.preferences.nonEmpty) {
+          "I used your saved preferences to recommend this question."
+        } else if (mostPlayedCategory.nonEmpty) {
+          s"I noticed you played '${mostPlayedCategory.get}' questions before, so I used that to recommend this."
+        } else {
+          "You do not have preferences yet, so I picked a good starter question."
+        }
+
+      val (questionText, newState) =
+        GameFlow.askQuestion(question, state)
+
+      val fullResponse =
+        recommendationIntro + "\n" + explanation + "\n\n" + questionText
+
+      (fullResponse, newState)
 
     case None =>
       ("No recommended questions available right now.", state)
