@@ -96,19 +96,22 @@ object Main {
     }
 
     def isGreeting(word: String): Boolean = word match {
-      case "hi" | "hello" | "hey" | "start" =>
-        true
-
-      case _ =>
-        false
+      case w if w.matches("h+i+") => true          // hi, hii, hiiii
+      case w if w.matches("he+y+") => true         // hey, heyyy
+      case w if w.matches("he+l+o+") => true       // hello, helloooo
+      case "yo" | "salam" | "welcome" => true
+      case _ => false
     }
 
     def isExit(word: String): Boolean = word match {
-      case "exit" | "bye" | "quit" | "close" =>
-        true
+      case w if w.matches("by+e+") => true         // bye, byee, byeee
+      case "goodbye" | "quit" | "exit" | "close" | "cya" | "later" => true
+      case _ => false
+    }
 
-      case _ =>
-        false
+    def isThanks(word: String): Boolean = word match {
+      case "thanks" | "thank" | "thx" | "ty" | "appreciate" => true
+      case _ => false
     }
 
     def isHelp(word: String): Boolean = word match {
@@ -120,7 +123,8 @@ object Main {
     }
 
     def isQuestionRequest(word: String): Boolean = word match {
-      case "play" | "question" | "ask" =>
+      case "play" | "question" | "ask" | "start" | "begin" |
+           "continue" | "next" | "again" | "another" | "more" =>
         true
 
       case _ =>
@@ -170,6 +174,9 @@ object Main {
       case words if words.exists(isExit) =>
         ExitChat
 
+      case words if words.exists(isThanks) =>
+        Thanks
+
       case words if words.exists(isHelp) =>
         Help
 
@@ -204,6 +211,14 @@ object Main {
         AnswerChoice("A")
 
       case words if words.length == 1 && (words.contains("b") || words.contains("second")) =>
+        AnswerChoice("B")
+
+      case words if words.exists(w => w == "choose" || w == "pick" || w == "option" || w == "choice") &&
+        words.contains("a") =>
+        AnswerChoice("A")
+
+      case words if words.exists(w => w == "choose" || w == "pick" || w == "option" || w == "choice") &&
+        words.contains("b") =>
         AnswerChoice("B")
 
       case words if words.exists(isRecommendationRequest) =>
@@ -311,7 +326,10 @@ def generateResponse(intent: Intent, state: ConversationState): (String, Convers
     
     case ShowProfile =>
       (GameFlow.getPlayerProfile(state), state)
-    
+
+    case Thanks =>
+      ("You're welcome! Type 'play' or 'continue' to get another question.", state)
+
     case Help =>
       (helpMessage(), state)
 
