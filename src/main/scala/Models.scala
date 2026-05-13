@@ -66,6 +66,10 @@ case class UnknownIntent(input: String) extends Intent
 // Called when the user uses offensive, rude, or inappropriate language
 case class InappropriateInput(input: String) extends Intent
 
+// Called when the user thanks the bot
+// e.g. "thanks", "thank you"
+case object Thanks extends Intent
+
 
 //---------------------------------------------------------------------------------------------------------------------
 // QUESTION MODEL
