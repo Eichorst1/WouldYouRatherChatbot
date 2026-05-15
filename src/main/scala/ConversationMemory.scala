@@ -81,6 +81,34 @@ def getMostDiscussedTopics(history: List[InteractionEntry]): List[String] = {
     .map { case (topic, count) => topic }
 }
 
+  """
+List(
+  InteractionEntry(topic = Some("funny")),
+  InteractionEntry(topic = Some("deep")),
+  InteractionEntry(topic = Some("funny")),
+  InteractionEntry(topic = None),
+  InteractionEntry(topic = Some("deep")),
+  InteractionEntry(topic = Some("funny"))
+)
+
+after flatmap : List("funny", "deep", "funny", "deep", "funny")
+
+after groupby : 
+
+"funny" -> List("funny", "funny", "funny"),
+"deep"  -> List("deep",  "deep")
+
+.map { case (topic, occurrences) => (topic, occurrences.size) }
+
+Map(
+  "funny" -> 3,
+  "deep"  -> 2
+)
+
+List(("funny", 3), ("deep", 2))
+
+  """
+
 
 // Detects user mood from conversation text
 def getUserMood(history: List[InteractionEntry]): String = {
