@@ -301,7 +301,9 @@ def generateResponse(intent: Intent, state: ConversationState): (String, Convers
       }
 
     case AnswerChoice(choice) =>
-      GameFlow.handleAnswer(choice, state)
+  val (reaction, newState) = GameFlow.handleAnswer(choice, state)
+  val followUp = GameFlow.suggestFollowUp(newState)
+  (reaction + "\n\n" + followUp, newState)
 
     case ShowSummary =>
       val history = ConversationMemory.getConversationHistory(state)
