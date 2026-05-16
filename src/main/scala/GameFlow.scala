@@ -24,9 +24,7 @@ def askQuestion(question: WyrQuestion, state: ConversationState): (String, Conve
     (formatQuestion(question), newState)
   }
 
-  def chooseNextQuestion(data: List[WyrQuestion], alreadyAsked: Set[Int]): Option[WyrQuestion] = {
-    data.find(question => !alreadyAsked.contains(question.id))
-}
+
 def getChoiceReaction(
     choice: String,
     question: WyrQuestion
@@ -78,28 +76,6 @@ def handleAnswer(choice: String,state: ConversationState): (String, Conversation
       (reaction, newState)
   }
 }
-
-
-// Updates answer statistics for A/B choices
-def updateAnswerStats(
-    stats: Map[String, Int],
-    question: WyrQuestion,
-    choice: String
-): Map[String, Int] = {
-
-  stats + (choice -> (stats.getOrElse(choice, 0) + 1))
-}
-
-
-// Adds question id to already asked set
-def updateAlreadyAsked(
-    alreadyAsked: Set[Int],
-    question: WyrQuestion
-): Set[Int] = {
-
-  alreadyAsked + question.id
-}
-
 
 // Builds player profile summary
 def getPlayerProfile(state: ConversationState): String = {
