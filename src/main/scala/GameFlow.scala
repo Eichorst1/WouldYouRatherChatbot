@@ -49,6 +49,8 @@ def handleAnswer(choice: String,state: ConversationState): (String, Conversation
    state.currentQuestion match {
      case None =>
      ("No active question.", state)
+     //  user typed A or B but no question is active
+     // safe fallback — return unchanged state, no crash
 
     case Some(question) =>
      val reaction =
@@ -56,6 +58,7 @@ def handleAnswer(choice: String,state: ConversationState): (String, Conversation
 
       val currentCount =
         state.answerStats.getOrElse(choice, 0)
+     // ↑ safe map lookup — if "A" key exists return its count, else 0
 
       val newStats =
         state.answerStats + (choice -> (currentCount + 1))
